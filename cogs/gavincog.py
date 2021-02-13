@@ -3,21 +3,27 @@ import discord
 import discord.utils
 import datetime as dt
 import concurrent.futures
+import DatabaseTools.tool as tool
 from discord.ext import commands
-from DatabaseTools import tool as database
 from random import choice
 from backend import load_model, predict
+from os import getenv
+from dotenv import load_dotenv
+
+load_dotenv()
+DEFAULT_MODEL = getenv('DEFAULT_MODEL')
+MODEL_PATHS = getenv('MODEL_PATHS')
 
 
 # 😂
 
 class Gavin(commands.Cog):
     def __init__(self, bot: commands.Bot):
-        database.connect()
         self.bot = bot
         self.archive_id = 785539080062631967
         self.loading = True
-        self.START_TOKEN, self.END_TOKEN, self.tokenizer, self.MAX_LENGTH, self.model, self.ModelName, self.hparams = load_model(input("Please enter model: "))
+        self.START_TOKEN, self.END_TOKEN, self.tokenizer, self.MAX_LENGTH, self.model, self.ModelName, self.hparams = load_model(
+            f"{MODEL_PATHS}{DEFAULT_MODEL}")
         self.swear_words = ['cock', 'tf', 'reggin', 'bellend', 'twat',
                             'bollocks', 'wtf', 'slag', 'fucker', 'rapist',
                             'shit', 'bitch', 'minger', 'nigger', 'fking',
@@ -30,6 +36,7 @@ class Gavin(commands.Cog):
         self.loading = False
         self.phrases = ["My brain is in confinement until further notice",
                         "My brain is currently unavailable, please leave a message so I can ignore it, kthxbye"]
+        self.connection, self.c = tool.connect()
 
     @commands.Cog.listener()
     async def on_message(self, user_message: discord.Message):
@@ -56,17 +63,18 @@ class Gavin(commands.Cog):
         with channel.typing():
             response = predict(content, self.tokenizer, self.swear_words, self.START_TOKEN, self.END_TOKEN,
                                self.MAX_LENGTH, self.model)
-            await database.sql_insert_into(message.guild.id, str(message.channel.id), self.ModelName,
-                                           message.author,
-                                           message.content, response,
-                                           date=int(dt.datetime.utcnow().timestamp()))
+            await tool.sql_insert_into(message.guild.id, str(message.channel.id), self.ModelName,
+                                       message.author,
+                                       message.content, response,
+                                       date=int(dt.datetime.utcnow().timestamp()), connection=self.connection,
+                                       cursor=self.c)
 
             msg = f"> {content} \n{message.author.mention} {response}"
             print(f"""Date: {dt.datetime.now().strftime('%d/%m/%Y %H-%M-%S.%f')[:-2]}
 Author: {message.author}
 Where: {message.guild}:{message.channel}
 Input: {content}
-Output: {response}""")
+Output: {response}\n\n""")
             if response is None or response == "":
                 await channel.send("👎")
                 return
@@ -94,7 +102,7 @@ Output: {response}""")
             self.loading = True
             await self.bot.change_presence(activity=discord.Game(name=f"Loading new model {model_name}"))
             with concurrent.futures.ThreadPoolExecutor(1) as executor:
-                future = executor.submit(load_model, "../bunchOfLogs/" + model_name)
+                future = executor.submit(load_model, MODEL_PATHS + model_name)
                 self.START_TOKEN, self.END_TOKEN, self.tokenizer, self.MAX_LENGTH, self.model, self.ModelName, self.hparams = future.result()
             self.loading = False
             await self.bot.change_presence(activity=discord.Game(name=f"Loaded into {model_name}"))
@@ -113,18 +121,20 @@ Output: {response}""")
     @commands.command(name="invite", aliases=['inv'])
     async def send_invite(self, ctx: commands.Context):
         """Send the bots invite link"""
-        await ctx.send(f"You can add me here!\nhttps://discord.com/api/oauth2/authorize?client_id=753611486999478322&permissions=378944&scope=bot")
+        await ctx.send(
+            f"You can add me here!\nhttps://discord.com/api/oauth2/authorize?client_id=753611486999478322&permissions=378944&scope=bot")
 
     @commands.command(name="history", aliases=['past', 'previous_messages'])
     async def send_history(self, ctx: commands.Context):
         """Send the past 10 messages for the guild."""
         # noinspection PyBroadException
         try:
-            results = database.sql_retrieve_last_10_messages(ctx.guild.id)
+            results = tool.sql_retrieve_last_10_messages(ctx.guild.id, self.connection, self.c)
             embed = discord.Embed(title=f"Message History for {ctx.guild.name}", type="rich",
                                   description="Shows the last 10 messages and responses from Gavin. For this guild")
             for result in results:
-                embed.add_field(name=f"Model: {result[2]}\nPrompt: {result[5]}", value=f"Author: {result[3]}\nReply: {result[5]}")
+                embed.add_field(name=f"Model: {result[2]}\nPrompt: {result[5]}",
+                                value=f"Author: {result[3]}\nReply: {result[5]}")
             await ctx.send(f"{ctx.message.author.mention}", embed=embed)
         except Exception as e:
             await ctx.send("👎")
