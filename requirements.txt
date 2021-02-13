@@ -1,4 +1,4 @@
 python-dotenv~=0.15.0
 discord.py~=1.6.0
-tensorflow==2.3.0
+tensorflow==2.4.0
 tensorflow-datasets==4.2.0
