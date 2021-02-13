@@ -1,7 +1,6 @@
 import re
 import discord
 import discord.utils
-import asyncio
 import datetime as dt
 import concurrent.futures
 from discord.ext import commands
@@ -18,8 +17,7 @@ class Gavin(commands.Cog):
         self.bot = bot
         self.archive_id = 785539080062631967
         self.loading = True
-        self.START_TOKEN, self.END_TOKEN, self.tokenizer, self.MAX_LENGTH, self.model, self.ModelName, self.hparams = load_model(
-            "../bunchOfLogs/" + input("Please enter model: "))
+        self.START_TOKEN, self.END_TOKEN, self.tokenizer, self.MAX_LENGTH, self.model, self.ModelName, self.hparams = load_model(input("Please enter model: "))
         self.swear_words = ['cock', 'tf', 'reggin', 'bellend', 'twat',
                             'bollocks', 'wtf', 'slag', 'fucker', 'rapist',
                             'shit', 'bitch', 'minger', 'nigger', 'fking',
