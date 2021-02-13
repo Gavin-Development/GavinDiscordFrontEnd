@@ -111,7 +111,7 @@ Output: {response}\n\n""")
     async def send_image(self, ctx: commands.Context):
         """Send the image of what the models Layers look like. Alias: img and im"""
         try:
-            with open(f"../bunchOfLogs/{self.ModelName}/images/{self.ModelName}_Image.png", "rb") as f:
+            with open(f"{MODEL_PATHS}{self.ModelName}/images/{self.ModelName}_Image.png", "rb") as f:
                 picture = discord.File(f)
         except Exception as e:
             await ctx.send(f"Error on image send: {e}")
