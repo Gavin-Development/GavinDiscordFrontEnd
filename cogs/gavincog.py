@@ -21,6 +21,11 @@ class Gavin(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.archive_id = 785539080062631967
+        self.phrases = ["My brain is in confinement until further notice",
+                        "My brain is currently unavailable, please leave a message so I can ignore it, kthxbye"]
+        # Inherit the connection from the Client defined in main.py
+        self.connection, self.c = self.bot.connection, self.bot.cursor
+        self.ids = ["<!810597892514381856>", "<810597892514381856>", "<!753611486999478322>", "<753611486999478322>"]
         self.loading = True
         self.START_TOKEN, self.END_TOKEN, self.tokenizer, self.MAX_LENGTH, self.model, self.ModelName, self.hparams = load_model(
             f"{MODEL_PATHS}{DEFAULT_MODEL}")
@@ -31,22 +36,19 @@ class Gavin(commands.Cog):
                             'fucking', 'knob', 'minge', 'clunge', 'whore',
                             'bloodclat', 'fuck', 'cunt', 'crap', 'pissed',
                             'prick', 'nickger', 'cocks', 'pussy', "fucking",
-                            "bullshit", "slut", "fuckin'", "slut"]
+                            "bullshit", "slut", "fuckin'", "slut", "dick"]
 
         self.loading = False
-        self.phrases = ["My brain is in confinement until further notice",
-                        "My brain is currently unavailable, please leave a message so I can ignore it, kthxbye"]
-        self.connection, self.c = tool.connect()
 
     @commands.Cog.listener()
     async def on_message(self, user_message: discord.Message):
         if not self.loading:
             await self.bot.change_presence(activity=discord.Game(name=f"Loaded Model {self.ModelName}"))
             if user_message.author != self.bot.user:
-                pattern = re.compile(r"[^a-zA-Z?.!,'\"<>0-9 ]+")
+                pattern = re.compile(r"[^a-zA-Z?.!,'\"<>0-9 :]+")
                 message = re.sub(pattern, "", user_message.content)
                 words = message.split(' ')
-                if words[0] == "<!753611486999478322>" or words[0] == "<753611486999478322>":
+                if words[0] in self.ids:
                     formatted_message = [words[1:]]
                     formatted_message = formatted_message[0]
                     message_for_bot = " ".join(formatted_message)
@@ -60,14 +62,14 @@ class Gavin(commands.Cog):
     async def chat(self, message: discord.Message, content: str):
         channel_id = int(message.channel.id)
         channel = discord.utils.get(message.guild.text_channels, id=channel_id)
-        with channel.typing():
-            response = predict(content, self.tokenizer, self.swear_words, self.START_TOKEN, self.END_TOKEN,
-                               self.MAX_LENGTH, self.model)
-            await tool.sql_insert_into(message.guild.id, str(message.channel.id), self.ModelName,
-                                       message.author,
-                                       message.content, response,
-                                       date=int(dt.datetime.utcnow().timestamp()), connection=self.connection,
-                                       cursor=self.c)
+        async with channel.typing():
+            response = await predict(content, self.tokenizer, self.swear_words, self.START_TOKEN, self.END_TOKEN,
+                                     self.MAX_LENGTH, self.model)
+            await tool.sql_insert_into_chat_logs(message.guild.id, str(message.channel.id), self.ModelName,
+                                                 message.author,
+                                                 message.content, response,
+                                                 date=int(dt.datetime.utcnow().timestamp()), connection=self.connection,
+                                                 cursor=self.c)
 
             msg = f"> {content} \n{message.author.mention} {response}"
             print(f"""Date: {dt.datetime.now().strftime('%d/%m/%Y %H-%M-%S.%f')[:-2]}
@@ -80,7 +82,6 @@ Output: {response}\n\n""")
                 return
             else:
                 sent = await channel.send(msg)
-                user = None
                 # await sent.add_reaction(emoji="😂")n
         return
 
@@ -133,8 +134,9 @@ Output: {response}\n\n""")
             embed = discord.Embed(title=f"Message History for {ctx.guild.name}", type="rich",
                                   description="Shows the last 10 messages and responses from Gavin. For this guild")
             for result in results:
-                embed.add_field(name=f"Model: {result[2]}\nPrompt: {result[5]}",
+                embed.add_field(name=f"Model: {result[2]}\nPrompt: {' '.join(result[4].split(' ')[1:])}",
                                 value=f"Author: {result[3]}\nReply: {result[5]}")
+                print(result)
             await ctx.send(f"{ctx.message.author.mention}", embed=embed)
         except Exception as e:
             await ctx.send("👎")
