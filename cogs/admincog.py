@@ -1,6 +1,7 @@
 import DatabaseTools.tool as tool
 from discord.ext import commands
 from discord import Embed
+from main import Gavin
 
 import discord.utils
 import re
@@ -10,14 +11,15 @@ class Admin(commands.Cog):
     error_emoji = "👎"
     success_emoji = "👍"
 
-    def __init__(self, bot: commands.Bot, verbose=True):
+    def __init__(self, bot: Gavin, verbose=True):
         """Admin Cog. Core functions for members with Administrator Permissions (Or Bot Owner Scot_Survivor)"""
         self.bot = bot
         self._last_member = None
         self.verbose = verbose
         self.function_names = ["Reload Module", "Modules List"]
         self.functions = [self.reload_module, self.modules]
-        self.connection, self.c = tool.connect()
+        self.connection, self.c = self.bot.connection, self.bot.cursor
+        self.bot_name = self.bot.bot_name
 
     @commands.command(name="stop")
     async def stop(self, ctx: commands.Context):
@@ -46,7 +48,7 @@ class Admin(commands.Cog):
         Part of admin cog
         :return a list of numbers"""
         if ctx.message.author.guild_permissions.administrator:
-            embed = Embed(title="Jane: Here are the modules")
+            embed = Embed(title="Gavin: Here are the modules")
             for m_name, c_object in self.bot.cogs.items():
                 embed.add_field(name=f"Module: {m_name}", value=f"Reload: cogs.{m_name.lower()}cog", inline=False)
             await ctx.channel.send(embed=embed)
@@ -116,13 +118,19 @@ class Admin(commands.Cog):
     @commands.command(name="prefix", aliases=['p'])
     async def prefix_update(self, ctx: commands.Context, *, prefix):
         """Update the prefix"""
-        try:
-            tool.sql_update_setting(int(ctx.message.guild.id), "commandPrefix", prefix, self.c, self.connection)
-            await ctx.send(self.success_emoji)
-        except Exception as e:
-            await ctx.send(self.error_emoji)
-            if self.verbose:
-                raise e
+        if ctx.message.author.guild_permissions.administrator:
+            try:
+                tool.sql_update_setting(int(ctx.message.guild.id), "commandPrefix", prefix, self.c, self.connection)
+                await ctx.send(self.success_emoji)
+            except Exception as e:
+                await ctx.send(self.error_emoji)
+                if self.verbose:
+                    raise e
+
+    @commands.command(name="shout")
+    async def shout(self, ctx: commands.Context, *, msg):
+        if ctx.message.author.id == 348519271460110338:
+            pass
 
     def returnHelp(self):
         return f"{self.__doc__}"

@@ -9,6 +9,7 @@ TOKEN = getenv('DISCORD_TOKEN')
 
 class Gavin(commands.Bot):
     connection, cursor = tool.connect()
+    bot_name = "Gavin"
     if tool.create_tables(connection, cursor):
         print("Table checks okay.")
 
