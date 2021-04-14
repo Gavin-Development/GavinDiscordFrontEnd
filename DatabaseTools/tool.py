@@ -2,6 +2,8 @@ import sqlite3
 import os
 import re
 
+import datetime as dt
+
 databaseName = "botDatabase.db"
 
 
@@ -19,11 +21,45 @@ def connect():
             "CREATE TABLE IF NOT EXISTS chat_logs(guild INTEGER, channel TEXT, model TEXT, author TEXT, ctx TEXT, reply TEXT, date INTEGER)")
         cursor.execute("CREATE TABLE IF NOT EXISTS settings(guildID INT, setting TEXT, value TEXT)")
         cursor.execute("CREATE TABLE IF NOT EXISTS disabled_commands(guildID INT, channelID INT, moduleName TEXT, commandName TEXT)")
+        cursor.execute(
+            "CREATE TABLE IF NOT EXISTS message_logs(id INTEGER PRIMARY KEY AUTOINCREMENT, message_content TEXT, attachment_links TEXT, length INTEGER, positive REAL, negative REAL, neutral REAL, compound REAL, insult INTEGER, unix INTEGER)")
         connection.commit()
     return connection, cursor
 
 
-async def sql_insert_into(guild: int, channel: str, model: str, author: str, message: str, reply: str, date: int, connection: sqlite3.Connection, cursor: sqlite3.Cursor):
+def create_tables(connection: sqlite3.Connection, cursor: sqlite3.Cursor):
+    try:
+        cursor.execute(
+            "CREATE TABLE IF NOT EXISTS chat_logs(guild INTEGER, channel TEXT, model TEXT, author TEXT, ctx TEXT, reply TEXT, date INTEGER)")
+        cursor.execute("CREATE TABLE IF NOT EXISTS settings(guildID INTEGER, setting TEXT, value TEXT)")
+        cursor.execute(
+            "CREATE TABLE IF NOT EXISTS disabled_commands(guildID INTEGER, channelID INTEGER, moduleName TEXT, commandName TEXT)")
+        cursor.execute(
+            "CREATE TABLE IF NOT EXISTS message_logs(id INTEGER PRIMARY KEY AUTOINCREMENT, message_content TEXT, attachment_links TEXT, length INTEGER, positive REAL, negative REAL, neutral REAL, compound REAL, insult INTEGER, unix INTEGER)")
+        connection.commit()
+    except Exception as e:
+        raise e
+    else:
+        return True
+
+
+def sql_insert_into_message_logs(message_content: str, attachment_links: str, length: int, pos: float, neg: float, neu: float, compound: float, insult: bool, connection: sqlite3.Connection, cursor: sqlite3.Cursor):
+    if insult:
+        insult = 1
+    else:
+        insult = 0
+    try:
+        sql = f"""INSERT INTO message_logs (message_content, attachment_links, length, positive, negative, neutral, compound, insult, unix) VALUES ('{message_content}', '{attachment_links}', {length}, {pos}, {neg}, {neu}, {compound}, {insult}, {int(dt.datetime.utcnow().timestamp())})"""
+        cursor.execute(sql)
+        connection.commit()
+    except Exception as e:
+        raise e
+        return f"Insertion Error: {e}"
+    else:
+        return True
+
+
+async def sql_insert_into_chat_logs(guild: int, channel: str, model: str, author: str, message: str, reply: str, date: int, connection: sqlite3.Connection, cursor: sqlite3.Cursor):
     if None not in (connection, cursor):
         sql = f"""INSERT INTO chat_logs (guild, channel, model, author, ctx, reply, date) VALUES ({guild}, '{channel}', '{model}', '{author}', '{message}', '{reply}', {date})"""
         try:
