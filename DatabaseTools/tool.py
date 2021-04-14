@@ -87,31 +87,24 @@ def sql_retrieve_last_10_messages(guild: int, connection: sqlite3.Connection, cu
 
 def sql_update_setting(guild: int, setting: str, value: str, cursor: sqlite3.Cursor, connection: sqlite3.Connection) -> bool:
     sql = """SELECT value from settings WHERE guildID == {} and setting = "{}";""".format(guild, setting)
-    pattern = re.compile(r"[<>#]")
-    value = re.sub(pattern, "", value)
     cursor.execute(sql)
     results = cursor.fetchall()
+    update = False
     for result in results:
         if value in result:
             raise SettingAlreadySet()
         else:
+            update = True
             continue
     else:
-        sql = """UPDATE settings SET value = {} WHERE setting = {} AND guildID = {};""".format(value, setting, guild)
-        try:
-            cursor.execute(sql)
-            connection.commit()
-        except sqlite3.OperationalError:
-            sql = """INSERT INTO settings (guildID, setting, value) VALUES ({}, "{}", "{}");""".format(guild, setting, value)
-            try:
-                cursor.execute(sql)
-                connection.commit()
-            except Exception as e:
-                raise e
-        except Exception as e:
-            raise e
+        if update:
+            sql = """UPDATE settings SET value = "{}" WHERE setting = "{}" AND guildID = {};""".format(value, setting, guild)
         else:
-            return True
+            sql = """INSERT INTO settings (guildID, setting, value) VALUES ({}, "{}", "{}");""".format(guild, setting,
+                                                                                                       value)
+        cursor.execute(sql)
+        connection.commit()
+        return True
 
 
 def sql_retrieve_setting(guild: int, setting: str, cursor: sqlite3.Cursor) -> str or None:
