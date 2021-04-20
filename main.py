@@ -31,7 +31,7 @@ class Gavin(commands.Bot):
 
 if __name__ == "__main__":
     bot = Gavin(command_prefix=Gavin.prefixes, max_messages=20_000)
-    bot.load_extension('cogs.gavincog')
     bot.load_extension('cogs.admincog')
+    bot.load_extension('cogs.gavincog')
     print("Trying to login...")
     bot.run(TOKEN)
