@@ -1,5 +1,5 @@
 # Gavin Discord Bot 
-This is part of the [Gavin](https://github.com/Scot-Survivor/GavinTraining) Family of Repos. 
+This is part of the [Gavin](https://github.com/Gavin-Development/) Family of Repos. 
 Connect Discord and Gavin. What more do you need in life!
 
 ## Install
