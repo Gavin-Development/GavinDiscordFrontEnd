@@ -1,10 +1,12 @@
-from os import getenv
-from discord.ext import commands
-from dotenv import load_dotenv
+import json
 import DatabaseTools.tool as tool
 
-load_dotenv()
-TOKEN = getenv('DISCORD_TOKEN')
+from nextcord.ext import commands
+
+
+file_handle = open("config.JSON", "r")
+config = json.loads(file_handle.read())
+file_handle.close()
 
 
 class Gavin(commands.Bot):
