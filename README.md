@@ -1,6 +1,5 @@
 # Gavin Discord Bot 
-This is part of the [Gavin](https://github.com/Gavin-Development/) Family of Repos. 
-Connect Discord and Gavin. What more do you need in life!
+Gavin Discord Frontend to speak to the Gavin Discord Bot [FastAPI Server](https://github.com/Gavin-Development/GavinFastAPI)
 
 ## Install
 `pip install -r requirements.txt` To install all required libraries. 
