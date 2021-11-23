@@ -45,7 +45,7 @@ class Gavin(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, user_message: nextcord.Message):
         if not self.loading:
-            await self.bot.change_presence(activity=nextcord.Game(name=f"Loaded Model {self.ModelName}"))
+            await self.bot.change_presence(activity=nextcord.Game(name=f"Currently Using Model: {self.ModelName}"))
             if user_message.author != self.bot.user:
                 pattern = re.compile(r"[^a-zA-Z?.!,'\"<>0-9 :]+")
                 message = re.sub(pattern, "", user_message.content)
