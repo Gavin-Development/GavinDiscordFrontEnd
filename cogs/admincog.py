@@ -1,3 +1,5 @@
+import nextcord
+
 import DatabaseTools.tool as tool
 from discord.ext import commands
 from discord import Embed
@@ -20,6 +22,11 @@ class Admin(commands.Cog):
         self.functions = [self.reload_module, self.modules]
         self.connection, self.c = self.bot.connection, self.bot.cursor
         self.bot_name = self.bot.bot_name
+
+    @commands.command(name="activity")
+    async def activity(self, ctx: commands.Context):
+        if ctx.message.author.id == 348519271460110338:
+            await self.bot.change_presence(activity=nextcord.Game(name=ctx.message.content))
 
     @commands.command(name="stop")
     async def stop(self, ctx: commands.Context):
