@@ -1,11 +1,11 @@
 import nextcord
 
 import DatabaseTools.tool as tool
-from discord.ext import commands
-from discord import Embed
+from nextcord.ext import commands
+from nextcord import Embed
 from main import Gavin
 
-import discord.utils
+import nextcord.utils
 import re
 
 
@@ -16,6 +16,7 @@ class Admin(commands.Cog):
     def __init__(self, bot: Gavin, verbose=True):
         """Admin Cog. Core functions for members with Administrator Permissions (Or Bot Owner Scot_Survivor)"""
         self.bot = bot
+        self.owner_id = self.bot.owner_id
         self._last_member = None
         self.verbose = verbose
         self.function_names = ["Reload Module", "Modules List"]
@@ -25,12 +26,18 @@ class Admin(commands.Cog):
 
     @commands.command(name="activity")
     async def activity(self, ctx: commands.Context):
-        if ctx.message.author.id == 348519271460110338:
-            await self.bot.change_presence(activity=nextcord.Game(name=ctx.message.content))
+        if ctx.message.author.id == self.owner_id:
+            try:
+                await self.bot.change_presence(activity=nextcord.Game(name=str(ctx.message.content)))
+            except Exception as e:
+                await ctx.send(self.error_emoji)
+                print(e)
+            else:
+                await ctx.send(self.success_emoji)
 
     @commands.command(name="stop")
     async def stop(self, ctx: commands.Context):
-        if ctx.message.author.id == 348519271460110338:
+        if ctx.message.author.id == self.owner_id:
             await ctx.send("Stopping the bot.\nReason: Owner Invoked Command.")
             quit()
 
@@ -136,7 +143,7 @@ class Admin(commands.Cog):
 
     @commands.command(name="shout")
     async def shout(self, ctx: commands.Context, *, msg):
-        if ctx.message.author.id == 348519271460110338:
+        if ctx.message.author.id == self.owner_id:
             pass
 
     def returnHelp(self):

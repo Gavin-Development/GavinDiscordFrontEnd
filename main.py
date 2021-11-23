@@ -15,6 +15,7 @@ class Gavin(commands.Bot):
     connection, cursor = tool.connect()
     bot_name = "Gavin"
     config = config_file
+    owner_id = 348519271460110338
     if tool.create_tables(connection, cursor):
         print("Table checks okay.")
 

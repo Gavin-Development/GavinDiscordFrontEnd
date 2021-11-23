@@ -10,6 +10,7 @@ from nextcord.ext import commands
 from random import choice
 from os import getenv
 from dotenv import load_dotenv
+from main import Gavin
 
 load_dotenv()
 DEFAULT_MODEL = getenv('DEFAULT_MODEL')
@@ -19,7 +20,7 @@ MODEL_PATHS = getenv('MODEL_PATHS')
 # 😂
 
 class Gavin(commands.Cog):
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: Gavin):
         self.bot = bot
         self.archive_id = 785539080062631967
         self.phrases = ["My brain is in confinement until further notice",
