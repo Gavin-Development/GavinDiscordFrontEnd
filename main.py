@@ -5,13 +5,16 @@ from nextcord.ext import commands
 
 
 file_handle = open("config.JSON", "r")
-config = json.loads(file_handle.read())
+config_file = json.loads(file_handle.read())
 file_handle.close()
+TOKEN = config_file["TOKEN"]
+del config_file["TOKEN"]
 
 
 class Gavin(commands.Bot):
     connection, cursor = tool.connect()
     bot_name = "Gavin"
+    config = config_file
     if tool.create_tables(connection, cursor):
         print("Table checks okay.")
 
