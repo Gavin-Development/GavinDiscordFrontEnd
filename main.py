@@ -8,6 +8,7 @@ file_handle = open("config.JSON", "r")
 config_file = json.loads(file_handle.read())
 file_handle.close()
 TOKEN = config_file["TOKEN"]
+bot_masters = config_file["BOT_MASTERS"]
 del config_file["TOKEN"]
 
 
@@ -15,7 +16,7 @@ class Gavin(commands.Bot):
     connection, cursor = tool.connect()
     bot_name = "Gavin"
     config = config_file
-    owner_id = 348519271460110338
+    bot_masters = bot_masters
     if tool.create_tables(connection, cursor):
         print("Table checks okay.")
 

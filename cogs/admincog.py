@@ -1,4 +1,5 @@
 import nextcord
+import json
 
 import DatabaseTools.tool as tool
 from nextcord.ext import commands
@@ -9,6 +10,11 @@ import nextcord.utils
 import re
 
 
+file_handle = open("config.JSON", "r")
+config_file = json.load(file_handle)
+file_handle.close()
+
+
 class Admin(commands.Cog):
     error_emoji = "👎"
     success_emoji = "👍"
@@ -16,28 +22,39 @@ class Admin(commands.Cog):
     def __init__(self, bot: Gavin, verbose=True):
         """Admin Cog. Core functions for members with Administrator Permissions (Or Bot Owner Scot_Survivor)"""
         self.bot = bot
-        self.owner_id = self.bot.owner_id
         self._last_member = None
         self.verbose = verbose
         self.function_names = ["Reload Module", "Modules List"]
         self.functions = [self.reload_module, self.modules]
         self.connection, self.c = self.bot.connection, self.bot.cursor
         self.bot_name = self.bot.bot_name
+        self.bot_masters = config_file["BOT_MASTERS"]
 
     @commands.command(name="activity")
     async def activity(self, ctx: commands.Context):
-        if ctx.message.author.id == self.owner_id:
-            try:
-                await self.bot.change_presence(activity=nextcord.Game(name=str(ctx.message.content)))
-            except Exception as e:
-                await ctx.send(self.error_emoji)
-                print(e)
+        activities = {'playing': nextcord.ActivityType.playing, 'streaming': nextcord.ActivityType.streaming,
+                      'listening': nextcord.ActivityType.listening, 'watching': nextcord.ActivityType.watching,
+                      'competing': nextcord.ActivityType.competing}
+        if ctx.message.author.id in self.bot_masters:
+            arguments = ctx.message.content.split(" ")
+            if arguments[1].lower() in activities.keys():
+                activity_type = activities[arguments[1].lower()]
+                activity_name = " ".join(arguments[2:])
+                try:
+                    await self.bot.change_presence(activity=nextcord.Activity(name=activity_name, type=activity_type))
+                except Exception as e:
+                    await ctx.send(self.error_emoji)
+                    print(e)
+                else:
+                    await ctx.send(self.success_emoji)
             else:
-                await ctx.send(self.success_emoji)
+                await ctx.send("Invalid Activity Type: " + arguments[0] + "\n" + "Valid Types: " + str(activities.keys()))
+        else:
+            await ctx.send(self.error_emoji + " You do not have permission to use this command.")
 
     @commands.command(name="stop")
     async def stop(self, ctx: commands.Context):
-        if ctx.message.author.id == self.owner_id:
+        if ctx.message.author.id in self.bot_masters:
             await ctx.send("Stopping the bot.\nReason: Owner Invoked Command.")
             quit()
 
@@ -143,7 +160,7 @@ class Admin(commands.Cog):
 
     @commands.command(name="shout")
     async def shout(self, ctx: commands.Context, *, msg):
-        if ctx.message.author.id == self.owner_id:
+        if ctx.message.author.id in self.bot_masters:
             pass
 
     def returnHelp(self):
