@@ -5,6 +5,7 @@ import re
 import nextcord
 import nextcord.utils
 import datetime as dt
+import logging
 import DatabaseTools.tool as tool
 from nextcord.ext import commands
 from random import choice
@@ -26,6 +27,8 @@ class GavinCog(commands.Cog):
         self.chatbot_server = f"http://{self.bot.config['ServerHost']}:{self.bot.config['ServerPort']}"
         self.ModelName = self.get_model_name()
         self.bot_hparams = self.get_hparams()
+        self.logger = logging.getLogger('nextcord')
+        self.logger.setLevel(logging.INFO)
 
     def get_hparams(self):
         response = requests.get(f"{self.chatbot_server}/chat_bot/hparams")
@@ -73,7 +76,7 @@ class GavinCog(commands.Cog):
                                                      cursor=self.c)
 
                 msg = f"> {content} \n{message.author.mention} {response}"
-                print(f"""Date: {dt.datetime.now().strftime('%d/%m/%Y %H-%M-%S.%f')[:-2]}
+                self.logger.info(f"""Date: {dt.datetime.now().strftime('%d/%m/%Y %H-%M-%S.%f')[:-2]}
 Author: {message.author}
 Where: {message.guild}:{message.channel}
 Input: {content}
@@ -84,7 +87,7 @@ Output: {response}\n\n""")
                 else:
                     await channel.send(msg)
             else:
-                print(f"Error: {web_response.status_code} {web_response.reason}")
+                self.logger.error(f"Error: {web_response.status_code} {web_response.reason}")
                 await channel.send("👎")
 
     @commands.command(name="hparams", aliases=['params', 'hp'])
@@ -132,7 +135,7 @@ Output: {response}\n\n""")
             for result in results:
                 embed.add_field(name=f"Model: {result[2]}\nPrompt: {' '.join(result[4].split(' ')[1:])}",
                                 value=f"Author: {result[3]}\nReply: {result[5]}")
-                print(result)
+                self.logger.debug(result)
             await ctx.send(f"{ctx.message.author.mention}", embed=embed)
         except Exception as e:
             await ctx.send("👎")

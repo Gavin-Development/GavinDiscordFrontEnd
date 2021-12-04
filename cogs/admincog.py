@@ -8,6 +8,7 @@ from main import Gavin
 
 import nextcord.utils
 import re
+import logging
 
 
 file_handle = open("config.JSON", "r")
@@ -29,6 +30,8 @@ class Admin(commands.Cog):
         self.connection, self.c = self.bot.connection, self.bot.cursor
         self.bot_name = self.bot.bot_name
         self.bot_masters = config_file["BOT_MASTERS"]
+        self.logger = logging.getLogger('nextcord')
+        self.logger.setLevel(logging.INFO)
 
     @commands.command(name="activity")
     async def activity(self, ctx: commands.Context):
@@ -44,11 +47,11 @@ class Admin(commands.Cog):
                     await self.bot.change_presence(activity=nextcord.Activity(name=activity_name, type=activity_type))
                 except Exception as e:
                     await ctx.send(self.error_emoji)
-                    print(e)
+                    self.logger.error(e)
                 else:
                     await ctx.send(self.success_emoji)
             else:
-                await ctx.send("Invalid Activity Type: " + arguments[0] + "\n" + "Valid Types: " + str(activities.keys()))
+                await ctx.send("Invalid Activity Type: " + arguments[1] + "\n" + "Valid Types: " + str(activities.keys()))
         else:
             await ctx.send(self.error_emoji + " You do not have permission to use this command.")
 
@@ -116,7 +119,7 @@ class Admin(commands.Cog):
             try:
                 modules[module][channelID] = command
             except KeyError as e:
-                print(f"Error: {e}")
+                self.logger.error(f"Error: {e}")
         embeds = []
         embedsTitle = []
         for i, collection in enumerate(results):
